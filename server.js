@@ -8,11 +8,9 @@ const Handlebars = require('handlebars');
 const expressHandlebars = require('express-handlebars');
 const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access') 
 
-
 //Import our database and model
 const {sequelize} = require('./db');
 const {Sauce} = require('./models/index');
-
 
 const seed = require('./seed')
 
@@ -26,8 +24,9 @@ app.set('view engine', 'handlebars'); // To render template files, set the follo
 //serve static assets from public folder
 app.use(express.static('public')) //
 
-//body parser so req.body is not undefined
-app.use(require('body-parser').urlencoded());
+//allow express to read json request bodies
+app.use(express.json())
+app.use(express.urlencoded())
 
 //seed our database
 seed();
@@ -44,7 +43,34 @@ app.get('/sauces/:id', async (req, res) => {
 })
 
 //New Routes go here: 
+app.get('/new-sauce', async (req, res) => {
+    res.render('newSauceForm')
+})
 
+//Post Route triggered by form submit action
+app.post('/new-sauce', async (req,res) =>{
+    //Add sauce to db based on html form data
+    const newSauce = await Sauce.create(req.body)
+    //Create a sauceAlert to pass to the template
+    let sauceAlert = `${newSauce.name} added to your database`
+    //Find newSauce in db by id
+    const foundSauce = await Sauce.findByPk(newSauce.id)
+    if(foundSauce){
+        res.render('newSauceForm',{sauceAlert})
+    } else {
+        sauceAlert = 'Failed to add Sauce'
+        res.render('newSauceForm',{sauceAlert})
+    }
+})
+
+//DELETE method, sauces/:id path => Deletes a sauce from db.sqlite
+app.delete('/sauces/:id', async (req,res)=>{
+    const deletedSauce = await Sauce.destroy({
+        where: {id:req.params.id}
+    })
+    const sauces = await Sauce.findAll();
+    res.render('sauces', {sauces})
+})
 
 //serving is now listening to PORT
 app.listen(PORT, () => {
