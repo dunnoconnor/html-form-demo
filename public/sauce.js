@@ -27,7 +27,7 @@ likeBtn.addEventListener('click', async () =>{
     let currentLikes = parseInt(likeCounter.innerHTML)
     console.log(currentLikes)
     //Increment current likes
-    currentLikes += 1
+    currentLikes ++
     //update the likes counter
     likeCounter.innerHTML = currentLikes
     //fetch the route for this id with the PUT method
