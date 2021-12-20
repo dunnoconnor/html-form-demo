@@ -12,7 +12,7 @@ const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-acce
 const {sequelize} = require('./db');
 const {Sauce} = require('./models/index');
 
-const seed = require('./seed')
+const seed = require('./seed');
 
 //Set up our templating engine with handlebars
 const handlebars = expressHandlebars({
@@ -26,12 +26,16 @@ app.use(express.static('public')) //
 
 //allow express to read json request bodies
 app.use(express.json())
-app.use(express.urlencoded())
+app.use(express.urlencoded({extended:false}))
 
 //seed our database
 seed();
 
 //*************** ROUTES ******************//
+app.get('/', (req, res) => {
+    res.redirect('/sauces');
+});
+
 app.get('/sauces', async (req, res) => {
     const sauces = await Sauce.findAll();
     res.render('sauces', {sauces}); //first param points to the sauces view in handlebars, second param is the data from the db
@@ -63,13 +67,20 @@ app.post('/new-sauce', async (req,res) =>{
     }
 })
 
+app.put('/sauces/:id', async (req,res) => {
+    let updatedSauce = await Sauce.update(req.body, {
+        where: {id: req.params.id}
+    })
+    const sauce = await Sauce.findByPk(req.params.id);
+    res.render('sauce', {sauce})
+})
+
 //DELETE method, sauces/:id path => Deletes a sauce from db.sqlite
 app.delete('/sauces/:id', async (req,res)=>{
     const deletedSauce = await Sauce.destroy({
         where: {id:req.params.id}
     })
-    const sauces = await Sauce.findAll();
-    res.render('sauces', {sauces})
+    res.send(deletedSauce ? 'Deleted' : 'Deletion Failed')
 })
 
 //serving is now listening to PORT
