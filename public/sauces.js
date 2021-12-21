@@ -5,6 +5,5 @@ async function deleteSauce(id){
         method: 'DELETE'
     })
     console.log(res)
-    //send user back to the sauces path
-    window.location.assign('/sauces')
+    
 }

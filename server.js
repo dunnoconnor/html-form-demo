@@ -2,6 +2,10 @@
 const express = require('express');
 const app = express();
 const PORT = 3000;
+//import bcrypt after an npm install
+const bcrypt = require('bcrypt');
+//set number of salt round for bcrypt encryption
+const saltRounds = 10;
 
 //Handlebars
 const Handlebars = require('handlebars');
@@ -10,9 +14,11 @@ const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-acce
 
 //Import our database and model
 const {sequelize} = require('./db');
-const {Sauce} = require('./models/index');
+const {Sauce} = require('./models/sauce');
+const {User} = require('./models/user');
+const req = require('express/lib/request');
 
-const seed = require('./seed');
+//const seed = require('./seed');
 
 //Set up our templating engine with handlebars
 const handlebars = expressHandlebars({
@@ -29,7 +35,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 
 //seed our database
-seed();
+//seed();
 
 //*************** ROUTES ******************//
 //index redirects to sauces
@@ -85,6 +91,69 @@ app.delete('/sauces/:id', async (req,res)=>{
         where: {id:req.params.id}
     })
     res.send(deletedSauce ? 'Deleted' : 'Deletion Failed')
+})
+
+//GET new user signup form
+app.get('/signup', async (req, res) => {
+    //render signup form template
+    res.render('signup')
+})
+
+//Post Route triggered by signup form submit action
+app.post('/signup', async (req,res) =>{
+    //access the username, password, and confirmPassword from the form
+    const username = req.body.username
+    const password = req.body.password
+    const confirm = req.body.confirm
+    //check that the two password entries match
+    if(password!==confirm){
+        //if not, signup fails
+        let userAlert = 'Signup Failed'
+        res.render('signup',{userAlert})
+    } else {
+        bcrypt.hash(password, saltRounds, async function (err,hash){
+            //Add user to db based on html form data with hashed password
+            const newUser = await User.create({'username':username, 'password':hash})
+            //Create a userAlert to pass to the template
+            let userAlert = `Welcome, ${newUser.username}!`
+            //Find newUser in db by id
+            const foundUser = await User.findByPk(newUser.id)
+            if(foundUser){
+                res.render('signup',{userAlert})
+            } else {
+                userAlert = 'Signup Failed'
+                res.render('signup',{userAlert})
+            }
+        })
+    }
+})
+
+//GET Returning User Sign in form
+app.get('/signin', async (req, res) => {
+    res.render('signin')
+})
+
+//Post Route triggered by form submit action
+app.post('/signin', async (req,res) =>{
+    const thisUser = await User.findOne({
+        where: {
+            username: req.body.username
+        }
+    })
+    if(!thisUser){
+        let userAlert = 'Sign-in Failed'
+        res.render('signin',{userAlert})
+    } else {
+        bcrypt.compare(req.body.password, thisUser.password, async function (err,result){
+            if (result){
+                let userAlert = `Welcome back, ${thisUser.username}`
+                res.render('signin',{userAlert})
+            } else {
+                let userAlert = 'Sign-in Failed'
+                res.render('signin',{userAlert})
+            }
+        })
+    }
 })
 
 //serving is now listening to PORT

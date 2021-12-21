@@ -2,7 +2,7 @@
 const deleteBtn = document.querySelector('#delete-btn')
 
 //find the like button in the document
-const likeBtn = document.querySelector('#like-btn')
+// const likeBtn = document.querySelector('#like-btn')
 
 //find the like counter in the document
 const likeCounter = document.querySelector('#like-counter')
@@ -21,13 +21,33 @@ deleteBtn.addEventListener('click', async () => {
     window.location.assign('/sauces')
   });
 
-//add an event to Like this sauce
-likeBtn.addEventListener('click', async () =>{
+// add an event to Like this sauce
+// likeBtn.addEventListener('click', async () =>{
+//     //get current likes from counter
+//     let currentLikes = parseInt(likeCounter.innerHTML)
+//     console.log(currentLikes)
+//     //Increment current likes
+//     currentLikes ++
+//     //update the likes counter
+//     likeCounter.innerHTML = currentLikes
+//     //fetch the route for this id with the PUT method
+//     let res = await fetch(`/sauces/${id}`, {
+//         method: 'PUT',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//             likes: currentLikes
+//         })
+//     })
+// })
+
+async function like(value){
     //get current likes from counter
     let currentLikes = parseInt(likeCounter.innerHTML)
     console.log(currentLikes)
-    //Increment current likes
-    currentLikes ++
+    //Adjust likes by values
+    currentLikes += value
     //update the likes counter
     likeCounter.innerHTML = currentLikes
     //fetch the route for this id with the PUT method
@@ -40,5 +60,5 @@ likeBtn.addEventListener('click', async () =>{
             likes: currentLikes
         })
     })
-})
-
+    
+}
