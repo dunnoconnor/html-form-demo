@@ -1,7 +1,16 @@
+
 <div>
+    {{#if user}}
+    <h3>Welcome {{user}}!</h3>
+    <a href="/logout">Sign Out</a>
+    {{/if}}
+
+    {{#unless user}}
     <a href="/signup">New User Sign Up</a>
     <br>
     <a href="/signin">Existing User Sign In</a>
+    {{/unless}}
+
     {{#each sauces}}
         <div>
             <img src="{{this.image}}"/>
