@@ -2,10 +2,15 @@
 const express = require('express');
 const app = express();
 const PORT = 3000;
+//dotenv for environment variables
+require('dotenv').config()
 //import bcrypt after an npm install
 const bcrypt = require('bcrypt');
 //set number of salt round for bcrypt encryption
 const saltRounds = 10;
+//import express-session and cookie-parser for session data
+const session = require('express-session')
+const cookieParser = require('cookie-parser')
 
 //Handlebars
 const Handlebars = require('handlebars');
@@ -34,6 +39,14 @@ app.use(express.static('public')) //
 app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 
+//configure app to use cookie-parser and express-session
+app.use(cookieParser());
+app.use(session({
+    secret: process.env.SECRET_KEY,
+    resave: false,
+    saveUninitialized: true,
+}));
+
 //seed our database
 //seed();
 
@@ -46,7 +59,13 @@ app.get('/', (req,res)=>{
 //get all sauces
 app.get('/sauces', async (req, res) => {
     const sauces = await Sauce.findAll();
-    res.render('sauces', {sauces}); //first param points to the sauces view in handlebars, second param is the data from the db
+    //set user to false by dault
+    let user = false
+    //if there is a username stored in session, pass data to template
+    if(req.session.username){
+       user = req.session.username
+    }
+    res.render('sauces', {sauces, user}); //first param points to the sauces view in handlebars, second param is the data from the db
 })
 
 //get sauce by id
@@ -99,6 +118,13 @@ app.get('/signup', async (req, res) => {
     res.render('signup')
 })
 
+//GET user logout
+app.get('/logout', async (req, res) => {
+    req.session.destroy(function(err) {
+        res.redirect('/sauces')
+      })
+})
+
 //Post Route triggered by signup form submit action
 app.post('/signup', async (req,res) =>{
     //access the username, password, and confirmPassword from the form
@@ -119,6 +145,10 @@ app.post('/signup', async (req,res) =>{
             //Find newUser in db by id
             const foundUser = await User.findByPk(newUser.id)
             if(foundUser){
+                //set session user to match username from db
+                req.session.userid = foundUser.id
+                req.session.username = foundUser.username
+                //re-render template
                 res.render('signup',{userAlert})
             } else {
                 userAlert = 'Signup Failed'
@@ -146,6 +176,10 @@ app.post('/signin', async (req,res) =>{
     } else {
         bcrypt.compare(req.body.password, thisUser.password, async function (err,result){
             if (result){
+                //set session user
+                req.session.userid = thisUser.id
+                req.session.username = thisUser.username
+                //re-render template
                 let userAlert = `Welcome back, ${thisUser.username}`
                 res.render('signin',{userAlert})
             } else {
