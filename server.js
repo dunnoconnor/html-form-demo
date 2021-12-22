@@ -22,7 +22,6 @@ const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-acce
 const {sequelize} = require('./db');
 const {Sauce} = require('./models/sauce');
 const {User} = require('./models/user');
-const req = require('express/lib/request');
 
 //const seed = require('./seed');
 
