@@ -1,7 +1,8 @@
 //Express 
 const express = require('express');
 const app = express();
-const PORT = 3000;
+//set port number to port in environment variables
+const PORT = process.env.PORT;
 //dotenv for environment variables
 require('dotenv').config()
 //import bcrypt after an npm install
