@@ -54,13 +54,18 @@ app.put('/sauces/:id', async (req,res) => {
     let updatedSauce = await Sauce.update(req.body, {
         where: {id: req.params.id}
     })
-    const sauce = await Sauce.findByPk(req.params.id)
-    res.render('sauce', {sauce})
+    res.send(updatedSauce ? 'Updated' : 'Update Failed')
 })
 
-//New Routes go here: 
+//render new-sauce form
 app.get('/new-sauce', async (req, res) => {
     res.render('newSauceForm')
+})
+
+//render edit-sauce form
+app.get('/edit-sauce/:id', async (req, res) => {
+    const sauce = await Sauce.findByPk(req.params.id)
+    res.render('editSauceForm', {sauce})
 })
 
 //Post Route triggered by form submit action
