@@ -3,6 +3,15 @@ const express = require('express');
 const app = express();
 const PORT = 3000;
 
+//import bcrypt for encrypted password storage
+const bcrypt = require('bcrypt')
+//set the number of saltrounds
+const saltRounds = 10;
+
+//import express-session and cookie-parser for session data
+const session = require('express-session');
+const cookieParser = require('cookie-parser')
+
 //Handlebars
 const Handlebars = require('handlebars');
 const expressHandlebars = require('express-handlebars');
@@ -10,9 +19,10 @@ const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-acce
 
 //Import our database and model
 const {sequelize} = require('./db');
-const {Sauce} = require('./models/index');
+const {Sauce} = require('./models/sauce');
 
 const seed = require('./seed');
+const { User } = require('./models/user');
 
 //Set up our templating engine with handlebars
 const handlebars = expressHandlebars({
@@ -28,6 +38,14 @@ app.use(express.static('public')) //
 app.use(express.json())
 app.use(express.urlencoded({extended:false}))
 
+//configure app to use session and cookie parser
+app.use(cookieParser())
+app.use(session({
+    secret: 'secretkeyfornow',
+    resave: false,
+    saveUninitialized: true,
+}))
+
 //seed our database
 seed();
 
@@ -40,13 +58,22 @@ app.get('/', (req,res)=>{
 //get all sauces
 app.get('/sauces', async (req, res) => {
     const sauces = await Sauce.findAll();
-    res.render('sauces', {sauces}); //first param points to the sauces view in handlebars, second param is the data from the db
+    let user = 'Guest'
+    if(req.session.username){
+        user = req.session.username
+    }
+    res.render('sauces', {sauces, user}); //first param points to the sauces view in handlebars, second param is the data from the db
 })
 
 //get sauce by id
 app.get('/sauces/:id', async (req, res) => {
     const sauce = await Sauce.findByPk(req.params.id);
-    res.render('sauce', {sauce}); //sauce hb view
+    let admin = false
+    if (req.session.username == 'michael'){
+        admin = true
+    }
+    console.log(req.session.username,admin)
+    res.render('sauce', {sauce, admin}); //sauce hb view
 })
 
 //update sauce by id
@@ -90,6 +117,94 @@ app.delete('/sauces/:id', async (req,res)=>{
         where: {id:req.params.id}
     })
     res.send(deletedSauce ? 'Deleted' : 'Deletion Failed')
+})
+
+//get route to render signup form
+app.get('/signup', (req,res) => {
+    let alert = ""
+    res.render('signup', {alert})
+})
+
+//post route for user signup action
+app.post('/signup', async (req,res) => {
+    //access username, password, and password confirmation from an html form
+    const username = req.body.username
+    const password = req.body.password
+    const confirm = req.body.confirm
+
+    //search for duplicate username
+    const findDupe = await User.findOne({where: {username: username}})
+
+    //check that passwords match
+    //if not, signup fails
+    if (password !== confirm){
+        let alert = "passwords must match"
+        res.render('signup', {alert})
+        //if username taken, signup fails
+    } else if (findDupe) {
+        let alert = "username taken"
+        res.render('signup', {alert})
+    } else {
+        bcrypt.hash(password, saltRounds, async function (err,hash){
+            const newUser = await User.create({'username':username, 'password':hash})
+            //render form again
+            //storing user id and username in session data
+            req.session.userid = newUser.id
+            req.session.username = newUser.username
+            let alert = `Welcome ${username}!`
+            res.render('signup', {alert})
+        })
+
+    }
+})
+
+//app.get to favorite a sauce
+// app.get('/favorite/:sauce', (req,res)=> {
+//     req.session.favorite = req.params.sauce
+//     res.redirect('/sauces')
+// })
+
+//user clicks 'favorite' button
+//set session favorite to this sauce
+//show favorite sauce in template
+
+
+//render the signin form
+app.get('/signin', (req,res) => {
+    let alert = ""
+    res.render('signin', {alert})
+})
+
+//post new user signin
+app.post('/signin', async (req,res) => {
+    //find one username where username in bd matches the form username
+    const thisUser = await User.findOne({where : {username: req.body.username}})
+    //if that user doesn't exist, signin fails
+    if (!thisUser){
+        let alert = 'user not found'
+        res.render('signin', {alert})
+    } else {
+        //compare form password to hashed password in bcrypt
+        bcrypt.compare(req.body.password, thisUser.password, async function (err,result){
+            if (result){
+                req.session.userid = thisUser.id
+                req.session.username = thisUser.username
+                let alert = `Welcome back ${thisUser.username}!`
+                res.render('signin', {alert})
+                //if passwords dont match, signin fails
+            } else {
+                let alert = 'wrong password'
+                res.render('signin', {alert})
+            }
+        })
+    }
+})
+
+//get route to logout user
+app.get('/logout', (req,res)=>{
+    req.session.destroy(function(err) {
+        res.redirect('/sauces')
+    })
 })
 
 //serving is now listening to PORT

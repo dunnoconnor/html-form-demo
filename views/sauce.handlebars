@@ -3,7 +3,9 @@
     <img class="item-img" src="{{sauce.image}}" />
     <h3>Likes: <span id="like-counter">{{sauce.likes}}</span></h3>
     <button id="like-btn">Like</button>
+    {{#if admin}}
     <button id="delete-btn">Delete</button>
+    {{/if}}
     <a href="/edit-sauce/{{sauce.id}}" class="edit-sauce-btn">Edit this sauce</a>
 </div>
 {{!-- connects this template to a JS file --}}
