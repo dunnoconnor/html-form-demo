@@ -8,6 +8,10 @@ const bcrypt = require('bcrypt')
 //set the number of saltrounds
 const saltRounds = 10;
 
+//cors
+// const cors = require('cors');
+// app.use(cors());
+
 //import express-session and cookie-parser for session data
 const session = require('express-session');
 const cookieParser = require('cookie-parser')
@@ -62,7 +66,8 @@ app.get('/sauces', async (req, res) => {
     if(req.session.username){
         user = req.session.username
     }
-    res.render('sauces', {sauces, user}); //first param points to the sauces view in handlebars, second param is the data from the db
+    res.json(sauces)
+    
 })
 
 //get sauce by id
@@ -157,16 +162,6 @@ app.post('/signup', async (req,res) => {
 
     }
 })
-
-//app.get to favorite a sauce
-// app.get('/favorite/:sauce', (req,res)=> {
-//     req.session.favorite = req.params.sauce
-//     res.redirect('/sauces')
-// })
-
-//user clicks 'favorite' button
-//set session favorite to this sauce
-//show favorite sauce in template
 
 
 //render the signin form
