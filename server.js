@@ -67,7 +67,6 @@ app.get('/sauces', async (req, res) => {
         user = req.session.username
     }
     res.json(sauces)
-    
 })
 
 //get sauce by id
