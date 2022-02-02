@@ -55,9 +55,9 @@ seed();
 
 //*************** ROUTES ******************//
 //index redirects to sauces
-app.get('/', (req,res)=>{
-    res.redirect('/sauces')
-})
+// app.get('/', (req,res)=>{
+//     res.redirect('/sauces')
+// })
 
 //get all sauces
 app.get('/sauces', async (req, res) => {
@@ -77,7 +77,7 @@ app.get('/sauces/:id', async (req, res) => {
         admin = true
     }
     console.log(req.session.username,admin)
-    res.render('sauce', {sauce, admin}); //sauce hb view
+    res.json({sauce}); //sauce json
 })
 
 //update sauce by id
