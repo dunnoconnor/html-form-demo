@@ -9,8 +9,8 @@ const bcrypt = require('bcrypt')
 const saltRounds = 10;
 
 //cors
-// const cors = require('cors');
-// app.use(cors());
+const cors = require('cors');
+app.use(cors());
 
 //import express-session and cookie-parser for session data
 const session = require('express-session');
